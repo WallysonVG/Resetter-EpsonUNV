@@ -19,7 +19,7 @@ from d4 import ErroD4
 from epson import ErroEpson, ImpressoraEpson
 from modelos import achar_modelo, pode_ler, pode_zerar, total_modelos
 
-VERSAO = "1.2"
+VERSAO = "1.3"
 
 
 class Cancelado(Exception):
@@ -97,7 +97,14 @@ def mostrar_contadores(imp, ficha):
 
 
 def confirmar(pergunta):
-    return input(f"\n{pergunta} Digite SIM para continuar: ").strip().upper() == "SIM"
+    """Pergunta S/N. Só aceita S ou N; qualquer outra coisa pergunta de novo."""
+    while True:
+        r = input(f"\n{pergunta} Continuar? (S/N): ").strip().upper()
+        if r == "S":
+            return True
+        if r == "N":
+            return False
+        print("Responda apenas S para sim ou N para não.")
 
 
 # --------------------------------------------------------------- ações

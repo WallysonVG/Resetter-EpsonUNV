@@ -19,7 +19,7 @@ com reset completo conhecido (L3250, L3150, L4260, L1800, ET-2810, XP, WF e outr
 2. Abra o `ResetEpson.exe` (ou `python reset.py`).
 3. Escolha no menu:
    - **1 - Ler contadores**: só mostra, não altera nada. Faça isso primeiro.
-   - **2 - Zerar**: salva um backup em `backups\` e pede para digitar SIM antes de gravar.
+   - **2 - Zerar**: salva um backup em `backups\` e pede confirmação (S/N) antes de gravar.
    - **3 - Restaurar**: volta os valores de um backup.
 4. Depois de zerar, desligue a impressora, espere 10 segundos e ligue de novo.
 
