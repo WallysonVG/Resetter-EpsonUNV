@@ -19,7 +19,7 @@ from d4 import ErroD4
 from epson import ErroEpson, ImpressoraEpson
 from modelos import achar_modelo, pode_ler, pode_zerar, total_modelos
 
-VERSAO = "1.1"
+VERSAO = "1.2"
 
 
 class Cancelado(Exception):
@@ -101,20 +101,26 @@ def confirmar(pergunta):
 
 
 # --------------------------------------------------------------- ações
-def acao_ler(imp):
-    ficha = identificar(imp)
-    mostrar_contadores(imp, ficha)
+def acao_ler(abrir):
+    with abrir() as imp:
+        ficha = identificar(imp)
+        mostrar_contadores(imp, ficha)
     ok, motivo = pode_zerar(ficha)
     if not ok:
         print(f"\nObs.: este modelo não pode ser zerado por aqui ({motivo}).")
 
 
-def acao_zerar(imp):
-    ficha = identificar(imp, precisa_gravar=True)
-    mostrar_contadores(imp, ficha)
+# A impressora encerra a sessão de serviço se ficar parada esperando.
+# Por isso a conexão é fechada ANTES de pedir confirmação e uma nova
+# é aberta só para gravar.
+
+def acao_zerar(abrir):
+    with abrir() as imp:
+        ficha = identificar(imp, precisa_gravar=True)
+        mostrar_contadores(imp, ficha)
+        valores = {f"0x{e:03X}": imp.ler(e) for e in sorted(ficha["reset"])}
 
     PASTA_BACKUP.mkdir(exist_ok=True)
-    valores = {f"0x{e:03X}": imp.ler(e) for e in sorted(ficha["reset"])}
     agora = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     arq = PASTA_BACKUP / f"backup-{ficha['nome']}-{agora}.json"
     arq.write_text(json.dumps({"modelo": ficha["nome"], "valores": valores}, indent=2))
@@ -126,17 +132,20 @@ def acao_zerar(imp):
         print("Cancelado. Nada foi alterado.")
         return
 
-    for end, val in sorted(ficha["reset"].items()):
-        imp.gravar(end, val)
-        print(f"  0x{end:03X} <- 0x{val:02X}  ok")
-
-    mostrar_contadores(imp, ficha)
+    print("\nGravando...")
+    with abrir() as imp:
+        identificar(imp, precisa_gravar=True)
+        for end, val in sorted(ficha["reset"].items()):
+            imp.gravar(end, val)
+            print(f"  0x{end:03X} <- 0x{val:02X}  ok")
+        mostrar_contadores(imp, ficha)
     print("\nPronto! Desligue a impressora, espere uns 10 segundos e ligue de novo.")
 
 
-def acao_restaurar(imp, arquivo):
+def acao_restaurar(abrir, arquivo):
     dados = json.loads(Path(arquivo).read_text())
-    ficha = identificar(imp, precisa_gravar=True)
+    with abrir() as imp:
+        ficha = identificar(imp, precisa_gravar=True)
     if dados.get("modelo") != ficha["nome"]:
         raise Cancelado(f"Esse backup é da {dados.get('modelo')}, "
                         f"mas a impressora conectada é a {ficha['nome']}.")
@@ -144,16 +153,17 @@ def acao_restaurar(imp, arquivo):
     if not confirmar("Os valores do backup serão gravados."):
         print("Cancelado.")
         return
-    for end, val in dados["valores"].items():
-        imp.gravar(int(end, 16), val)
-        print(f"  {end} <- 0x{val:02X}  ok")
+    with abrir() as imp:
+        identificar(imp, precisa_gravar=True)
+        for end, val in dados["valores"].items():
+            imp.gravar(int(end, 16), val)
+            print(f"  {end} <- 0x{val:02X}  ok")
     print("Restaurado. Reinicie a impressora.")
 
 
 def executar(acao, debug=False, *extra):
     try:
-        with conectar(debug) as imp:
-            acao(imp, *extra)
+        acao(lambda: conectar(debug), *extra)
     except Cancelado as e:
         print(f"\n{e}")
     except (ErroD4, ErroEpson, OSError) as e:

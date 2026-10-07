@@ -52,9 +52,12 @@ class ImpressoraEpson:
         return self
 
     def __exit__(self, *exc):
+        # Erros ao encerrar não podem esconder o erro original.
         try:
             self.d4.fechar_canal(self.ctrl)
             self.d4.sair()
+        except Exception as e:
+            self.log(f"  aviso ao encerrar a sessão: {e}")
         finally:
             self.io.__exit__(*exc)
 
