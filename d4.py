@@ -100,6 +100,25 @@ class LinkD4:
 
     # ----------------------------------------------------------- comandos D4
     def iniciar(self):
+        """Entra no modo D4. Se a impressora estiver presa numa sessão anterior
+        (nossa ou do driver da Epson), faz um soft reset da USB — o mesmo efeito
+        de tirar e colocar o cabo — e tenta de novo."""
+        try:
+            self._entrar()
+        except (OSError, ErroD4) as e:
+            resetar = getattr(self.io, "soft_reset", None)
+            if resetar is None:
+                raise
+            self.log(f"  a impressora não respondeu ({e}); reiniciando a conexão USB...")
+            resetar()
+            time.sleep(1.5)
+            self.buffer = b""
+            self.creditos = {}
+            self.pendentes = {}
+            self.revisao = 0x20
+            self._entrar()
+
+    def _entrar(self):
         self.log("Entrando no modo IEEE 1284.4...")
         self.io.write(ENTRAR_D4)
         resp = b""

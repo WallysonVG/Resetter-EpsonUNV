@@ -79,6 +79,14 @@ kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
 kernel32.CancelIo.argtypes = [wintypes.HANDLE]
 kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
 kernel32.ResetEvent.argtypes = [wintypes.HANDLE]
+kernel32.DeviceIoControl.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p,
+                                     wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
+                                     ctypes.POINTER(wintypes.DWORD), ctypes.POINTER(OVERLAPPED)]
+
+# usbprint.sys: CTL_CODE(FILE_DEVICE_UNKNOWN, 16, METHOD_BUFFERED, FILE_ANY_ACCESS)
+# Manda o pedido SOFT_RESET da classe de impressoras USB: limpa os buffers e
+# reinicia a comunicação, como se o cabo tivesse sido reconectado.
+IOCTL_USBPRINT_SOFT_RESET = 0x220040
 
 
 def listar_impressoras_usb():
@@ -114,7 +122,7 @@ def listar_impressoras_usb():
 class UsbPrintIO:
     """Abre a impressora e oferece read()/write() com tempo limite."""
 
-    def __init__(self, caminho, timeout_ms=1500):
+    def __init__(self, caminho, timeout_ms=2000):
         self.caminho = caminho
         self.timeout_ms = timeout_ms
         self.h = None
@@ -152,6 +160,17 @@ class UsbPrintIO:
                 return 0
         kernel32.GetOverlappedResult(self.h, ctypes.byref(ov), ctypes.byref(feito), True)
         return feito.value
+
+    def soft_reset(self):
+        ov = OVERLAPPED()
+        ov.hEvent = self.evento
+        kernel32.ResetEvent(self.evento)
+        feito = wintypes.DWORD(0)
+        ok = kernel32.DeviceIoControl(self.h, IOCTL_USBPRINT_SOFT_RESET, None, 0, None, 0,
+                                      None, ctypes.byref(ov))
+        if not ok and ctypes.get_last_error() == ERROR_IO_PENDING:
+            kernel32.WaitForSingleObject(self.evento, 3000)
+            kernel32.GetOverlappedResult(self.h, ctypes.byref(ov), ctypes.byref(feito), False)
 
     def write(self, dados):
         buf = ctypes.create_string_buffer(bytes(dados), len(dados))

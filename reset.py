@@ -19,7 +19,7 @@ from d4 import ErroD4
 from epson import ErroEpson, ImpressoraEpson
 from modelos import achar_modelo, pode_ler, pode_zerar, total_modelos
 
-VERSAO = "1.3"
+VERSAO = "1.4"
 
 
 class Cancelado(Exception):
@@ -175,7 +175,8 @@ def executar(acao, debug=False, *extra):
         print(f"\n{e}")
     except (ErroD4, ErroEpson, OSError) as e:
         print(f"\nERRO: {e}")
-        print("Dica: feche o Epson Status Monitor, confira o cabo e tente de novo.")
+        print("Dica: feche o Epson Status Monitor e tente de novo. Se persistir,\n"
+              "      tire e coloque o cabo USB.")
 
 
 # --------------------------------------------------------------- menu
