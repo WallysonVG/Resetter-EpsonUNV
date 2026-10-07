@@ -1,1 +1,1 @@
-SHA-256 do ResetEpson.exe: f9e350f9164c8e5da2da6511ac5bfff460c56d084cec7e11d873c68b3e5d6507
+SHA-256 do ResetEpson.exe: 0df13d8957428ba65420b09e2254f41e1fae98caffc24fddf78e9bb24f807237
