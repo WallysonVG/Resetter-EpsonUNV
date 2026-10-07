@@ -4,8 +4,6 @@
 
 **Baixar:** [`release/ResetEpson.exe`](release/ResetEpson.exe) — roda em qualquer Windows, sem Python.
 
-> Status: ainda não testado numa impressora real. Use primeiro a opção 1 (só leitura).
-
 Lê e zera os contadores de tinta descartada de impressoras Epson ligadas na USB.
 Reconhece o modelo sozinho e traz um banco com 1.589 modelos, cerca de 1.000 deles
 com reset completo conhecido (L3250, L3150, L4260, L1800, ET-2810, XP, WF e outros).
