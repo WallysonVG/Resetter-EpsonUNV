@@ -1,7 +1,5 @@
 # Resetter - EpsonUNV
 
-> Repositório antes chamado "Instalador de Impressoras".
-
 **Baixar:** [`release/ResetEpson.exe`](release/ResetEpson.exe) — roda em qualquer Windows, sem Python.
 
 Lê e zera os contadores de tinta descartada de impressoras Epson ligadas na USB.
